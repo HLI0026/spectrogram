@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 # --- Constants and Configuration ---
 CHANNEL_MAPPING = {
     'R': 'intensity',  # Red channel for audio intensity (loudness)
-    'B': 'frequency',  # Green channel for frequency
-    'G': 'arbitrary'   # An arbitrary, constant value for the blue channel
+    'B': 'frequency_d',  # Green channel for frequency
+    'G': 'frequency_c'   # An arbitrary, constant value for the blue channel
 }
 
 N_FFT = 1024       # Number of FFT components
@@ -86,17 +86,18 @@ def generate_custom_spectrogram(audio_path, output_path, mode, min_db, max_db,
         
         n_amplitudes = 16  # Number of frequency bins
 
-        freq_gradient = np.linspace(0, n_amplitudes+1, height+1, dtype=np.uint8)  # Gradient from 0 to 8, one value per frequency bin
-        freq_gradient = freq_gradient[:-1]  
-        freq_gradient = freq_gradient* (256/n_amplitudes) # Scale to 0-255 range
-        freq_gradient[freq_gradient > 255] = 255  # Ensure no values exceed 255
-        
-        arbitrary_channel = np.full((height, width), 0, dtype=np.uint8)
-        frequency_channel = np.tile(freq_gradient[:, np.newaxis], (1, width))
+        freq_gradient_discrete = np.linspace(0, n_amplitudes+1, height+1, dtype=np.uint8)  # Gradient from 0 to 8, one value per frequency bin
+        freq_gradient_discrete = freq_gradient_discrete[:-1]  
+        freq_gradient_discrete = freq_gradient_discrete* (256/n_amplitudes) # Scale to 0-255 range
+        freq_gradient_discrete[freq_gradient_discrete > 255] = 255  # Ensure no values exceed 255
+
+        freq_grad_continous = np.linspace(0, 128, height, dtype=np.uint8)  # Arbitrary channel with a constant value across the width
+        frequency_channel_continous = np.tile(freq_grad_continous[:, np.newaxis], (1, width))
+        frequency_channel_discrete = np.tile(freq_gradient_discrete[:, np.newaxis], (1, width))
         # Map data to RGB
 
         channel_data = {
-            'intensity': intensity_channel, 'frequency': frequency_channel, 'arbitrary': arbitrary_channel
+            'intensity': intensity_channel, 'frequency_d': frequency_channel_discrete, 'frequency_c': frequency_channel_continous
         }
         r, g, b = channel_data[CHANNEL_MAPPING['R']], channel_data[CHANNEL_MAPPING['G']], channel_data[CHANNEL_MAPPING['B']]
         
